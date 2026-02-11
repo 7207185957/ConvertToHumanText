@@ -4,7 +4,16 @@
 
 1. Converts AI-generated text into more human-like writing.
 2. Verifies the converted output against reference examples.
-3. Supports reference examples from:
+3. Optionally verifies against external detector providers:
+   - ZeroGPT
+   - Crossplag
+   - Content at Scale
+   - Copyleaks
+   - OpenAI
+   - GPTZero
+   - Sapling
+   - Writer
+4. Supports reference examples from:
    - text files (`.txt`, `.md`)
    - JSON arrays of strings (`.json`)
    - images (`.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`) via OCR
@@ -33,6 +42,55 @@ Then open: `http://localhost:8000`
 - Left side: paste AI-generated text.
 - Right side: see humanized text output.
 - Optional: add reference text or upload a reference file/image for verification.
+- Optional: select external detector providers and require external pass.
+
+## Where verification is done
+
+There are now two verification layers:
+
+1. **Internal verification (local):**
+   - file: `humanizer_agent/verification.py`
+   - compares output style/content against your reference examples.
+2. **External provider verification (API-based):**
+   - file: `humanizer_agent/external_verification.py`
+   - calls selected providers and aggregates pass/fail + probabilities.
+
+## External provider configuration
+
+For each provider, set:
+
+- `HUMANIZER_<PROVIDER>_API_URL`
+- `HUMANIZER_<PROVIDER>_API_KEY` (if required)
+
+Optional:
+
+- `HUMANIZER_<PROVIDER>_AUTH_HEADER` (default: `Authorization`)
+- `HUMANIZER_<PROVIDER>_TEXT_FIELD` (default: `text`)
+- `HUMANIZER_<PROVIDER>_STATIC_PAYLOAD_JSON`
+- `HUMANIZER_<PROVIDER>_AI_SCORE_KEY`
+- `HUMANIZER_<PROVIDER>_HUMAN_SCORE_KEY`
+- `HUMANIZER_<PROVIDER>_PASS_KEY`
+
+Provider prefixes:
+
+- `ZEROGPT`
+- `CROSSPLAG`
+- `CONTENT_AT_SCALE` (also supports legacy `CONTENTATSCALE`)
+- `COPYLEAKS`
+- `OPENAI`
+- `GPTZERO`
+- `SAPLING`
+- `WRITER`
+
+Example:
+
+```bash
+export HUMANIZER_GPTZERO_API_URL="https://your-gptzero-endpoint"
+export HUMANIZER_GPTZERO_API_KEY="your-key"
+```
+
+> Note: this project does not bypass provider authentication.
+> You must provide valid API endpoints and credentials for each external service.
 
 ### 1) Run with plain input text
 
@@ -69,6 +127,17 @@ python -m humanizer_agent.cli \
   --min-score 85
 ```
 
+### 4) Run with external detectors
+
+```bash
+python -m humanizer_agent.cli \
+  --text "Moreover, it is important that we do not utilize overly complex terminology." \
+  --external-providers "zerogpt,crossplag,contentatscale,copyleaks,openai,gptzero,sapling,writer" \
+  --external-human-threshold 0.6 \
+  --require-external-pass \
+  --json
+```
+
 ## CLI Options
 
 - `--text`: AI-generated input text.
@@ -77,6 +146,9 @@ python -m humanizer_agent.cli \
 - `--references-text`: inline newline-separated references.
 - `--min-score`: minimum verification score required (default `99.9`).
 - `--max-iterations`: rewrite attempts for style matching (default `4`).
+- `--external-providers`: comma-separated external providers.
+- `--external-human-threshold`: minimum per-provider human score (`0.0-1.0`).
+- `--require-external-pass`: require external checks to pass.
 - `--output-file`: save only converted text.
 - `--report-file`: save full JSON report.
 - `--json`: print full JSON report to stdout.

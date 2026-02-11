@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from .agent import AITextHumanizationAgent
+from .external_verification import DEFAULT_PROVIDER_IDS
 from .references import ReferenceLoadError
 
 
@@ -43,6 +44,24 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Number of rewrite attempts. Default: 4",
     )
     parser.add_argument(
+        "--external-providers",
+        help=(
+            "Comma-separated detectors to call externally "
+            f"(supported: {', '.join(DEFAULT_PROVIDER_IDS)})."
+        ),
+    )
+    parser.add_argument(
+        "--external-human-threshold",
+        type=float,
+        default=0.5,
+        help="Minimum per-provider human probability for external pass. Default: 0.5",
+    )
+    parser.add_argument(
+        "--require-external-pass",
+        action="store_true",
+        help="Require external providers to pass before considering output verified.",
+    )
+    parser.add_argument(
         "--output-file",
         help="Optional path to save only the humanized text.",
     )
@@ -65,6 +84,12 @@ def _read_input_text(args: argparse.Namespace) -> str:
     return path.read_text(encoding="utf-8").strip()
 
 
+def _parse_external_providers(raw: str | None) -> list[str]:
+    if not raw:
+        return []
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
 def main() -> None:
     parser = _build_parser()
     args = parser.parse_args()
@@ -82,6 +107,9 @@ def main() -> None:
     agent = AITextHumanizationAgent(
         min_verification_score=args.min_score,
         max_iterations=max(1, args.max_iterations),
+        external_providers=_parse_external_providers(args.external_providers),
+        external_min_human_probability=max(0.0, min(1.0, args.external_human_threshold)),
+        require_external_verification=args.require_external_pass,
     )
     try:
         output = agent.convert(
@@ -115,6 +143,15 @@ def main() -> None:
         )
         print(
             f"Human-likeness confidence: {output.human_likeness_confidence:.2f}",
+            file=sys.stderr,
+        )
+    if output.external_verification:
+        status = "PASS" if output.external_verification.passed else "FAIL"
+        print(
+            f"External Verification: {status} | "
+            f"providers={len(output.external_verification.requested_providers)} "
+            f"configured={output.external_verification.configured_count} "
+            f"available={output.external_verification.available_count}",
             file=sys.stderr,
         )
 

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import json
+import os
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 from humanizer_agent.agent import AITextHumanizationAgent
+from humanizer_agent.external_verification import ExternalDetectorsVerifier
 from humanizer_agent.references import ReferenceLoader
 from humanizer_agent.verification import TextVerifier
 
@@ -55,6 +58,31 @@ class AgentTests(unittest.TestCase):
         result = verifier.verify(text, [text], min_score=90.0)
         self.assertGreaterEqual(result.score, 90.0)
         self.assertTrue(result.passed)
+
+    def test_convert_with_external_provider_summary(self) -> None:
+        def fake_post(
+            _url: str, _headers: dict[str, str], _payload: dict[str, object], _timeout: float
+        ) -> tuple[int, dict[str, object]]:
+            return 200, {"human_probability": 0.88, "ai_probability": 0.12}
+
+        external_verifier = ExternalDetectorsVerifier(http_post=fake_post)
+        agent = AITextHumanizationAgent(
+            min_verification_score=10.0,
+            external_providers=["zerogpt"],
+            require_external_verification=True,
+            external_verifier=external_verifier,
+        )
+        with mock.patch.dict(
+            os.environ,
+            {"HUMANIZER_ZEROGPT_API_URL": "https://example.test/zerogpt"},
+            clear=True,
+        ):
+            output = agent.convert(self.ai_text, reference_examples=self.reference_examples)
+
+        self.assertIsNotNone(output.external_verification)
+        assert output.external_verification is not None
+        self.assertEqual(output.external_verification.available_count, 1)
+        self.assertTrue(output.external_verification.passed)
 
 
 if __name__ == "__main__":

@@ -19,6 +19,8 @@ class UITests(unittest.TestCase):
         self.assertIn("AI Text Humanizer + Verification", payload)
         self.assertIn("Input (AI Generated)", payload)
         self.assertIn("Output (Human Generated)", payload)
+        self.assertIn("External Detector Sources", payload)
+        self.assertIn("ZeroGPT", payload)
 
     def test_post_humanization_renders_output(self) -> None:
         response = self.client.post(

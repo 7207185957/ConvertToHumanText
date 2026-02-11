@@ -28,10 +28,49 @@
             <input type="number" name="max_iterations" min="1" max="10" step="1" value="{{ max_iterations }}">
           </label>
 
+          <label class="field">
+            <span>External Human Threshold (0.0 - 1.0)</span>
+            <input
+              type="number"
+              name="external_human_threshold"
+              min="0"
+              max="1"
+              step="0.01"
+              value="{{ external_human_threshold }}"
+            >
+          </label>
+
           <label class="field file-field">
             <span>Reference File/Image</span>
             <input type="file" name="reference_file" accept=".txt,.md,.json,.png,.jpg,.jpeg,.webp,.gif">
           </label>
+        </section>
+
+        <section class="field providers-field">
+          <div class="providers-header">
+            <span>External Detector Sources</span>
+            <label class="toggle-field">
+              <input
+                type="checkbox"
+                name="require_external_verification"
+                {% if require_external_verification %}checked{% endif %}
+              >
+              <span>Require external pass</span>
+            </label>
+          </div>
+          <div class="providers-grid">
+            {% for provider in provider_options %}
+            <label class="provider-option">
+              <input
+                type="checkbox"
+                name="external_providers"
+                value="{{ provider.id }}"
+                {% if provider.id in external_providers_selected %}checked{% endif %}
+              >
+              <span>{{ provider.label }}</span>
+            </label>
+            {% endfor %}
+          </div>
         </section>
 
         <section class="field">
@@ -114,6 +153,75 @@ Sometimes sentences are short, sometimes longer."
           </div>
         {% else %}
           <p>No references provided. Verification was skipped.</p>
+        {% endif %}
+
+        {% if report.external_verification %}
+          <h3 class="external-title">External Detector Results</h3>
+          <div class="stats-grid external-grid">
+            <div class="stat">
+              <span>Status</span>
+              <strong class="{{ 'pass' if report.external_verification.passed else 'fail' }}">
+                {{ 'PASS' if report.external_verification.passed else 'FAIL' }}
+              </strong>
+            </div>
+            <div class="stat">
+              <span>Configured</span>
+              <strong>{{ report.external_verification.configured_count }}</strong>
+            </div>
+            <div class="stat">
+              <span>Available</span>
+              <strong>{{ report.external_verification.available_count }}</strong>
+            </div>
+            <div class="stat">
+              <span>Aggregate Human Probability</span>
+              <strong>{{ report.external_verification.aggregate_human_probability }}</strong>
+            </div>
+            <div class="stat">
+              <span>Aggregate AI Probability</span>
+              <strong>{{ report.external_verification.aggregate_ai_probability }}</strong>
+            </div>
+            <div class="stat">
+              <span>Threshold</span>
+              <strong>{{ report.external_verification.threshold }}</strong>
+            </div>
+          </div>
+
+          <div class="providers-table-wrap">
+            <table class="providers-table">
+              <thead>
+                <tr>
+                  <th>Provider</th>
+                  <th>Configured</th>
+                  <th>Available</th>
+                  <th>Human Prob</th>
+                  <th>AI Prob</th>
+                  <th>Pass</th>
+                  <th>Error</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in report.external_verification.provider_results %}
+                <tr>
+                  <td>{{ item.provider_label }}</td>
+                  <td>{{ 'Yes' if item.configured else 'No' }}</td>
+                  <td>{{ 'Yes' if item.available else 'No' }}</td>
+                  <td>{{ item.human_probability }}</td>
+                  <td>{{ item.ai_probability }}</td>
+                  <td>
+                    {% if item.passed == true %}
+                      <span class="pass">PASS</span>
+                    {% elif item.passed == false %}
+                      <span class="fail">FAIL</span>
+                    {% else %}
+                      <span>-</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ item.error or '-' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         {% endif %}
       </section>
       {% endif %}
