@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "humanizer-agent"
+version = "0.1.0"
+description = "Agent that converts AI-generated text into human-like text and verifies style against references."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Cursor Agent" }]
+dependencies = []
+
+[project.optional-dependencies]
+ocr = ["pillow", "pytesseract"]
+
+[project.scripts]
+humanizer-agent = "humanizer_agent.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["humanizer_agent*"]
