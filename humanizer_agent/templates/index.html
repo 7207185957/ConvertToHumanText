@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Humanizer Agent UI</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+  </head>
+  <body>
+    <main class="container">
+      <header class="hero">
+        <h1>AI Text Humanizer + Verification</h1>
+        <p>
+          Paste AI-generated content on the left. The humanized version appears on the right.
+          Add reference text or upload a reference image/file for verification.
+        </p>
+      </header>
+
+      <form method="post" enctype="multipart/form-data" class="panel form-panel">
+        <section class="controls-grid">
+          <label class="field">
+            <span>Minimum Score</span>
+            <input type="number" name="min_score" min="0" max="100" step="0.1" value="{{ min_score }}">
+          </label>
+
+          <label class="field">
+            <span>Max Iterations</span>
+            <input type="number" name="max_iterations" min="1" max="10" step="1" value="{{ max_iterations }}">
+          </label>
+
+          <label class="field file-field">
+            <span>Reference File/Image</span>
+            <input type="file" name="reference_file" accept=".txt,.md,.json,.png,.jpg,.jpeg,.webp,.gif">
+          </label>
+        </section>
+
+        <section class="field">
+          <span>Reference Text (optional, one example per line)</span>
+          <textarea
+            name="references_text"
+            rows="3"
+            placeholder="I keep writing simple and natural.
+Sometimes sentences are short, sometimes longer."
+          >{{ references_text }}</textarea>
+        </section>
+
+        <section class="split-editor">
+          <article class="editor-card">
+            <div class="editor-header">
+              <h2>Input (AI Generated)</h2>
+            </div>
+            <textarea
+              id="input_text"
+              name="input_text"
+              rows="18"
+              placeholder="Paste your AI-generated text here..."
+            >{{ input_text }}</textarea>
+          </article>
+
+          <article class="editor-card">
+            <div class="editor-header output-header">
+              <h2>Output (Human Generated)</h2>
+              <button type="button" id="copy-output" class="ghost-btn">Copy</button>
+            </div>
+            <textarea
+              id="output_text"
+              rows="18"
+              readonly
+              placeholder="Humanized output will appear here..."
+            >{{ output_text }}</textarea>
+          </article>
+        </section>
+
+        <div class="actions">
+          <button type="submit" class="primary-btn">Humanize Text</button>
+        </div>
+      </form>
+
+      {% if error %}
+      <section class="panel error-panel">{{ error }}</section>
+      {% endif %}
+
+      {% if success and report %}
+      <section class="panel stats-panel">
+        <h3>Verification Summary</h3>
+        {% if report.verification %}
+          <div class="stats-grid">
+            <div class="stat">
+              <span>Status</span>
+              <strong class="{{ 'pass' if report.verification.passed else 'fail' }}">
+                {{ 'PASS' if report.verification.passed else 'FAIL' }}
+              </strong>
+            </div>
+            <div class="stat">
+              <span>Score</span>
+              <strong>{{ report.verification.score }}</strong>
+            </div>
+            <div class="stat">
+              <span>Threshold</span>
+              <strong>{{ report.verification.threshold }}</strong>
+            </div>
+            <div class="stat">
+              <span>Attempts</span>
+              <strong>{{ report.attempts }}</strong>
+            </div>
+            <div class="stat">
+              <span>Human-Likeness</span>
+              <strong>{{ report.human_likeness_confidence }}</strong>
+            </div>
+            <div class="stat">
+              <span>References Used</span>
+              <strong>{{ report.verification.reference_count }}</strong>
+            </div>
+          </div>
+        {% else %}
+          <p>No references provided. Verification was skipped.</p>
+        {% endif %}
+      </section>
+      {% endif %}
+    </main>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>

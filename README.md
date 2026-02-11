@@ -14,6 +14,26 @@
 
 ## Quick Start
 
+### Web UI (split-screen, HIX-style flow)
+
+Install dependencies:
+
+```bash
+pip install -e .
+```
+
+Start UI:
+
+```bash
+python -m humanizer_agent.webapp
+```
+
+Then open: `http://localhost:8000`
+
+- Left side: paste AI-generated text.
+- Right side: see humanized text output.
+- Optional: add reference text or upload a reference file/image for verification.
+
 ### 1) Run with plain input text
 
 ```bash

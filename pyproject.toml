@@ -10,14 +10,18 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Cursor Agent" }]
-dependencies = []
+dependencies = ["flask"]
 
 [project.optional-dependencies]
 ocr = ["pillow", "pytesseract"]
 
 [project.scripts]
 humanizer-agent = "humanizer_agent.cli:main"
+humanizer-agent-ui = "humanizer_agent.webapp:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["humanizer_agent*"]
+
+[tool.setuptools.package-data]
+humanizer_agent = ["templates/*.html", "static/*.css", "static/*.js"]
