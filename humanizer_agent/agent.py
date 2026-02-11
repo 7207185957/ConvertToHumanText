@@ -99,10 +99,9 @@ class AITextHumanizationAgent:
     def _convert_with_verification(
         self, ai_generated_text: str, reference_examples: list[str]
     ) -> HumanizationOutput:
-        target_len = mean([style_profile(ref).avg_sentence_length for ref in reference_examples]) or 16.0
-        target_contractions = mean(
-            [style_profile(ref).contraction_ratio for ref in reference_examples]
-        )
+        reference_profiles = [style_profile(ref) for ref in reference_examples]
+        target_len = mean([profile.avg_sentence_length for profile in reference_profiles]) or 16.0
+        target_contractions = mean([profile.contraction_ratio for profile in reference_profiles])
         tuned = self.humanizer.tune_config_for_reference(target_len, target_contractions)
 
         candidate_best = ""

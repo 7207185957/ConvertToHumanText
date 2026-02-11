@@ -5,7 +5,6 @@ from __future__ import annotations
 import random
 import re
 from dataclasses import dataclass
-from statistics import mean
 
 from .text_utils import split_sentences, style_profile, tokenize_words
 

@@ -15,6 +15,8 @@ class ReferenceLoader:
     """Load reference examples from text, JSON, or image sources."""
 
     IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
+    BULLET_PREFIX_RE = re.compile("^(?:[-*]+|\\u2022+)\\s*")
+    ORDERED_PREFIX_RE = re.compile(r"^\d+[\.\)]\s*")
 
     def load_from_source(self, source: str | Path) -> list[str]:
         path = Path(source)
@@ -81,8 +83,8 @@ class ReferenceLoader:
             if not line:
                 continue
             # Drop bullets or numbering prefixes from OCR/list formats.
-            line = re.sub(r"^[\-\*\u2022]+\s*", "", line)
-            line = re.sub(r"^\d+[\.\)]\s*", "", line)
+            line = ReferenceLoader.BULLET_PREFIX_RE.sub("", line)
+            line = ReferenceLoader.ORDERED_PREFIX_RE.sub("", line)
             if line:
                 lines.append(line)
 
